@@ -1,18 +1,21 @@
 #include "header.h"
 
 void init() {
+    // buat baca file
     FILE *fp = fopen("dictionary", "r");
     int i;
+    // menyimpan kata dari file sebanyak variabel
     for(i = 0; i < WORDSCOUNT; ++i) {
         fscanf(fp, "%s\n", databaseKata[i]);
     }
-    
 }
-
+ 
 void makeNewText(char* text) {
+    /* menampilkan teks di typethis menyimpan teks */
     char output[255];
 
     int index = 0;
+
     while(strlen(output) < 60) {
         int random = rand() % WORDSCOUNT;
 
@@ -20,7 +23,6 @@ void makeNewText(char* text) {
 
         strcpy(temp, databaseKata[random]);
         
-
         for(int i = 0; i < strlen(temp); ++i, ++index) {
             output[index] = temp[i];
         }
@@ -34,9 +36,9 @@ void makeNewText(char* text) {
 }
 
 int menu() {
+    // menampilkan menu pilihan
     initscr();
     noecho();
-
     // initialize window
     WINDOW* win = newwin(SCREENHEIGHT, SCREENWIDTH, START_Y, START_X);  
     refresh();
@@ -53,6 +55,10 @@ int menu() {
     int highlighted = 1;
 
     print_menu(win, highlighted);
+    /* untuk pilihan atas bawah
+    kalau melebihi dari pilihan yang ada 
+    akan kembali ke paling bawah 
+    selagi paling atas akan berkurang*/ 
     while(1) {
         c = wgetch(win);
         switch(c) {
@@ -105,13 +111,6 @@ void print_menu(WINDOW *menu_win, int highlight) {
 	wrefresh(menu_win);
 }
 
-
-void pseudo_server() {
-    // generate random seed 
-
-    // 
-}
-
 void renderSinglePlayer() {
 
     for(int i = 0; i < typedLetterIndex; ++i) {
@@ -140,8 +139,6 @@ void renderSinglePlayer() {
     }
     wclrtoeol(win);
 
-
-
     mvwprintw(win, 12, 1, "%d %s", countCorrectLetterTyped, "Correct Letter");
     wclrtoeol(win);
 
@@ -154,8 +151,6 @@ void renderSinglePlayer() {
     wrefresh(win);
 }
 
-
-
 void* print_info() {
     time(&current_time);
 
@@ -164,7 +159,6 @@ void* print_info() {
     mvwprintw(win, 15, 1, "time spent: %d seconds     ", timeSpent);
 
     mvwprintw(win, 16, 1, "%.2f CPM     ", (float)totalLetter * 60/ timeSpent);
-
 
     mvwprintw(win, 17, 1, "%.2f%s     ", (float) countCorrectLetterTyped*100/totalLetter, "% accuracy" );
 
@@ -176,16 +170,10 @@ void* print_info() {
     if(timeSpent < TIMELIMIT) {
         print_info();
     } else {
-
-
-
-
         pthread_cancel(input_thread);
-
+        ch = '\0';
         pthread_exit(NULL);
     }
-
-
 }
 
 void* print_info_multiplayer() {
@@ -239,19 +227,21 @@ void* input() {
 }
 
 void singleplayer() {
-    
+    // menjalankan screen
     initscr();
     // clear();
     // refresh();
-
+    //fungsi random
     time_t t;
+    // membuat fungsi random
     srand((unsigned) time(&t));
     not_playing = false;
-
+    // memulai waktu dan timer
+    // waktu
     time(&starting_time);
     pthread_create(&time_thread, NULL, print_info, NULL);
 
-
+    /* buat window , nampilkan windows, buat box dan menampilkan windows */
     win = newwin(SCREENHEIGHT, SCREENWIDTH, START_Y, START_X);  
     wrefresh(win);
     clear();
@@ -261,62 +251,72 @@ void singleplayer() {
     wrefresh(win);
     box(win, 0, 0);
     wrefresh(win);
-
+    /* saat memberi masukan jadi ketikan ilang, menampilkan manual */
     noecho();
-
+    /* menyimpan yang diketik, buat kosongkan stringnya */
     // generate
     typedLetterIndex = 0;
     for(int i = 0; i < 255; ++i) {
         typedLetter[i] = '\0';
     }
-    // typedLetter[0] = '\0';
+    /* buat teks baru simpan di typethis */
     makeNewText(typeThis);
-
+    /* inisialisasi */
     countCorrectLetterTyped = 0;
     countWrongLetterTyped = 0;
+    /* merender */
     renderSinglePlayer();
-    while( timeSpent < TIMELIMIT) {
+    /* buat time spent time limitnya 60 */
+    while(timeSpent < TIMELIMIT) {
+        /* buat input lalu nunggu selesai input,  */
         pthread_create(&input_thread, NULL, input, NULL);
         pthread_join(input_thread, NULL);
         switch(ch) {
-            case 127 : 
-                if(typedLetterIndex <= 0) break;
+            case 127 : //delete
+                if(typedLetterIndex <= 0) break; // tidak nge delete
+                // yang di ketik sebelumnya benar
                 if(typedLetter[typedLetterIndex - 1] == typeThis[typedLetterIndex - 1]) {
-                    countCorrectLetterTyped--;
+                    countCorrectLetterTyped--; // betul kurang
                 }
+                // salah berkurang
                 else {
                     countWrongLetterTyped--;
                 }
                 typedLetterIndex -= 1;
+                /* yang diketik berkurang satu nah kosong lalu dibreak */
                 typedLetter[typedLetterIndex] = '\0';
                 break;
-
-            case 10 : 
-                if(typedLetterIndex != strlen(typeThis)) break;
-                // ambil data baru
-                makeNewText(typeThis);
+            // 
+            case 10 : //enter
+                if(typedLetterIndex != strlen(typeThis)) break; // ketika kata yang muncul sudah diketikkan
+                // lalu, ambil data baru
+                makeNewText(typeThis); //buat kata-kata yang baru
+                // semua di kosong
                 for(int i = 0; i < 200; ++i) {
-                    typedLetter[i] = '\0';
+                    typedLetter[i] = '\0'; // kosongin variabel
                 }
+                // ulangi dari awal
                 typedLetterIndex = 0;
                 break;
-
+            // kasus biasa refresh semua typed letter, lalu jalanin pita baru
+            // 
             default : 
-                if(typedLetterIndex == strlen(typeThis)) break;
+            // cuma pgn ada enter
+                if(typedLetterIndex == strlen(typeThis)) break; 
                 if(ch == typeThis[typedLetterIndex]) {
                     countCorrectLetterTyped++;
+                    // jika char sesuai dg tampilan jumlah kata benar nambah
                 } else {
                     countWrongLetterTyped++;
                 }
-                typedLetter[typedLetterIndex] = ch;
-                typedLetterIndex += 1;
+                // char yang di ketik disimpan ke var ch untuk apa
+                typedLetter[typedLetterIndex] = ch; // yang di ketik jadi ch
+                typedLetterIndex += 1; // index bertambah
             
         }
-        
+        // render lagi
         renderSinglePlayer();
     }
-
-
     
     not_playing = true;
     pthread_join(time_thread, NULL);
@@ -343,13 +343,6 @@ void singleplayer() {
     main();
 }
 
-void multiplayer() {
-    // get seed from server
-    // awaiting for others player
-    // starting games
-    
-}
-
 int main() {
     init();
     int game = menu();
@@ -360,10 +353,6 @@ int main() {
         break;
 
         case 2 : 
-            multiplayer();
-        break;
-
-        case 3 : 
             return 0;
     }
     return 0;
