@@ -30,15 +30,11 @@ time_t starting_time;
 time_t current_time;
 
 char *menu_choices[] = {
-        "Singleplayer",
-        "Multiplayer",
+        "Play",
         "Exit"
     };
 
-typedef struct {
-    // seed
-    // enemy score
-} server_data;
+
 int choices_count = sizeof(menu_choices) / sizeof(char*);
 
 int typedLetterIndex = 0;
